@@ -1,0 +1,4 @@
+data/
+dump/
+.DS_Store
+db.sqlite3

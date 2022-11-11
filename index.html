@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+    <title>ChartBrainz</title>
+
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"
+    />
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"
+    />
+
+    <script src="https://unpkg.com/vue@latest/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.6.1.min.js"
+      integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+      crossorigin="anonymous"
+    ></script>
+
+    <style>
+      .muted_tag {
+        color: gray;
+        text-decoration: none;
+      }
+
+      .genre_tag {
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="container">
+        <div class="row">
+          <div class="col-2">
+            <a href="#" @click="() => setCurrentGenre('', 0)">All Genres</a>
+            <genre-list
+              :genres="genres"
+              :root-genres="rootGenres"
+              :set-current-genre="setCurrentGenre"
+              :depth="0"
+              :path="path"
+            />
+          </div>
+
+          <div class="col-10">
+            <h1>
+              Top {{ currentGenre }} releases of {{ decade ? 'the ' + decade :
+              'all-time' }}
+              <a
+                class="btn btn-primary"
+                href="https://github.com/elliotchance/chartbrainz/issues"
+                target="_blank"
+              >
+                Report Bug / Feature Request
+              </a>
+            </h1>
+            <ul class="nav nav-pills">
+              <li class="nav-item">
+                <a
+                  :class="'nav-link ' + (decade === '' ? 'active' : '')"
+                  href="#"
+                  @click="() => decade = ''"
+                  >All-time</a
+                >
+              </li>
+              <li
+                class="nav-item"
+                v-for="d in ['2020s', '2010s', '2000s', '1990s', '1980s', '1970s', '1960s', '1950s']"
+              >
+                <a
+                  :class="'nav-link ' + (decade === d ? 'active' : '')"
+                  href="#"
+                  @click="() => decade = d"
+                  >{{ d }}</a
+                >
+              </li>
+            </ul>
+            <br />
+            <h2 v-if="releases.length === 0">No releases.</h2>
+            <table class="table" v-if="releases.length > 0">
+              <thead>
+                <tr>
+                  <th width="100">&nbsp;</th>
+                  <th width="50">&nbsp;</th>
+                  <th>&nbsp;</th>
+                  <th style="text-align: center">Average</th>
+                  <th style="text-align: center">Ratings</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="release, i in releases">
+                  <release-row :release="release" :number="i + 1" />
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const app = Vue.createApp({
+        data() {
+          $.getScript(`./data/genres.json`, (data) => {
+            this.genres = JSON.parse(data);
+          });
+
+          this.load(`./data/top.json`);
+
+          return {
+            currentGenre: "",
+            all_releases: [],
+            genres: [],
+            decade: "",
+            path: [],
+          };
+        },
+        computed: {
+          rootGenres() {
+            const all = new Set([
+              ...this.genres.map((genre) => genre.parent_genre),
+              ...this.genres.map((genre) => genre.child_genre),
+            ]);
+
+            const children = new Set(
+              this.genres.map((genre) => genre.child_genre)
+            );
+
+            return new Set(
+              [...all].filter((element) => !children.has(element))
+            );
+          },
+          releases() {
+            if (this.decade !== "") {
+              const maxYear = parseInt(this.decade.substr(0, 4), 10);
+              const minYear = maxYear - 10;
+
+              return this.all_releases.filter(
+                (r) => r.release_year >= minYear && r.release_year <= maxYear
+              );
+            }
+            return this.all_releases;
+          },
+        },
+        methods: {
+          setCurrentGenre(genre, depth) {
+            if (depth >= this.path.length) {
+              this.path.push(genre);
+            } else {
+              this.path = this.path.slice(0, depth);
+              this.path[depth] = genre;
+            }
+
+            if (genre === "") {
+              this.load(`./data/top.json`);
+            } else {
+              this.load(`./data/genre/${genre}.json`);
+            }
+            this.currentGenre = genre;
+          },
+          load(path) {
+            $.getScript(path)
+              .done((data) => {
+                this.all_releases = JSON.parse(data);
+              })
+              .fail(() => {
+                this.all_releases = [];
+              });
+          },
+        },
+      });
+
+      app.component("genre-list", {
+        props: ["genres", "rootGenres", "setCurrentGenre", "path", "depth"],
+        template: `
+            <ul style="list-style: none;">
+                <li v-for="genre in rootGenres">
+                    <small><tag :name="genre" @click="() => setCurrentGenre(genre, depth)">{{ genre }}</genre></small>
+
+                    <genre-list :genres="genres"
+                        :root-genres="this.genres.filter(g => g.parent_genre === genre).map(g => g.child_genre)"
+                        :set-current-genre="setCurrentGenre" v-if="genre === path[depth]" :path="path" :depth="depth+1" />
+                </li>
+            </ul>`,
+      });
+
+      app.component("tag", {
+        props: ["name", "cls", "link"],
+        template: `<a :href="link ? 'https://musicbrainz.org/tag/' + name : '#'" :target="link ? '_blank' : ''" :class="cls">{{ name }}</a>`,
+      });
+
+      app.component("date", {
+        props: ["year", "month", "day"],
+        template: `{{ day }} {{ monthName }} {{ year }}`,
+        computed: {
+          monthName() {
+            return [
+              "January",
+              "February",
+              "March",
+              "April",
+              "May",
+              "June",
+              "July",
+              "August",
+              "September",
+              "October",
+              "November",
+              "December",
+            ][this.month - 1];
+          },
+        },
+      });
+
+      app.component("release-row", {
+        props: ["release", "number"],
+        template: `
+            <tr>
+                <td>
+                <img
+                    :src="'https://coverartarchive.org/release-group/' + release.release_group_gid + '/front'"
+                    :alt="release.release_group"
+                    width="100"
+                />
+                </td>
+                <td class="h5" style="text-align: right">{{ number }}.</td>
+                <td>
+                <a :href="'https://musicbrainz.org/release-group/' + release.release_group_gid" target="_blank">{{ release.release_group }}</a><br />
+                <strong>{{ release.artist }}</strong>
+                <br />
+                <small><date :year="release.release_year" :month="release.release_month" :day="release.release_day"/></small>
+                <br />
+                <small><raw-tags :tags="release.genres" cls="genre_tag"/></small>
+                <small><raw-tags :tags="release.tags" cls="muted_tag"/></small>
+                </td>
+                <td style="text-align: center">{{ release.rating / 20 }}</td>
+                <td style="text-align: center">{{ release.rating_count }}</td>
+            </tr>`,
+      });
+
+      app.component("raw-tags", {
+        props: ["tags", "cls"],
+        template: `<div>
+            <span v-for="name, i in orderedTags">
+                {{ i > 0 ? ', ' : '' }}<tag :name="name" :cls="cls"/>
+            </span>
+        </div>`,
+        computed: {
+          parsedTags() {
+            let parsedTags = [];
+            for (const tag of (this.tags || "").split(";")) {
+              const [count, name] = tag.split(" ", 2);
+              parsedTags.push([name, parseInt(count, 10)]);
+            }
+
+            return parsedTags;
+          },
+          orderedTags() {
+            return this.parsedTags.sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+          },
+          count() {
+            return (this.tags || "").split(";").length;
+          },
+        },
+      });
+
+      app.mount("#app");
+    </script>
+  </body>
+</html>
