@@ -39,6 +39,9 @@ db.sqlite3: dump/mbdump dump/mbdump-derived
 	sqlite3 db.sqlite3 "UPDATE release_group_meta SET first_release_date_month = NULL WHERE first_release_date_month = '\N';"
 	sqlite3 db.sqlite3 "UPDATE release_group_meta SET first_release_date_day = NULL WHERE first_release_date_day = '\N';"
 
+data:
+	mkdir -p data
+
 data/genre: data
 	mkdir -p data/genre
 
@@ -87,7 +90,7 @@ WHERE rating IS NOT NULL AND rating_count >= 3 AND count > 0 AND genre.name IN (
 ) AND release_group.gid NOT IN (SELECT * FROM exclude_release_groups) \
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8 \
 ORDER BY rating DESC, rating_count DESC, count DESC \
-LIMIT 100;"
+LIMIT 250;"
 
 data/top.json:
 	sqlite3 db.sqlite3 '.mode json' '.once $@' "\
@@ -112,14 +115,14 @@ WHERE rating IS NOT NULL AND rating_count >= 24 AND count > 0 \
 	AND release_group.gid NOT IN (SELECT * FROM exclude_release_groups) \
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8 \
 ORDER BY rating DESC, rating_count DESC, count DESC \
-LIMIT 100;"
+LIMIT 250;"
 
 .PHONY: clean
 clean:
 	rm -rf db.sqlite3
 
 .PHONY: all-data
-all-data: data/genres.json data/top.json
+all-data: data data/genres.json data/top.json
 	sqlite3 db.sqlite3 '\
 SELECT name \
 FROM genre \

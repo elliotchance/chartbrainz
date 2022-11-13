@@ -38,14 +38,35 @@
       .genre_tag {
         text-decoration: none;
       }
+      
+      ul { margin-left: 1em; padding: 0; }
     </style>
   </head>
   <body>
     <div id="app">
       <div class="container">
+        <div class="row" style="border-bottom: solid 1px gray">
+          <div class="col-6">
+            <h1>ChartBrainz</h1>
+          </div>
+          <div class="col-6">
+            <div style="text-align: right; margin-top: 10px">
+              <a
+                class="btn btn-primary"
+                href="https://github.com/elliotchance/chartbrainz/issues"
+                target="_blank"
+              >
+                Report Bug / Feature Request
+              </a>
+            </div>
+          </div>
+        </div>
         <div class="row">
-          <div class="col-2">
-            <a href="#" @click="() => setCurrentGenre('', 0)">All Genres</a>
+          <div class="col-2" style="border-left: solid 1px gray; border-right: solid 1px gray">
+            <a href="#" @click="() => setCurrentGenre('', 0)">
+              <strong v-if="currentGenre === ''">All Genres</strong>
+              <span v-if="currentGenre !== ''">All Genres</span>
+            </a>
             <genre-list
               :genres="genres"
               :root-genres="rootGenres"
@@ -55,17 +76,10 @@
             />
           </div>
 
-          <div class="col-10">
+          <div class="col-10" style="border-right: solid 1px gray">
             <h1>
               Top {{ currentGenre }} releases of {{ decade ? 'the ' + decade :
               'all-time' }}
-              <a
-                class="btn btn-primary"
-                href="https://github.com/elliotchance/chartbrainz/issues"
-                target="_blank"
-              >
-                Report Bug / Feature Request
-              </a>
             </h1>
             <ul class="nav nav-pills">
               <li class="nav-item">
@@ -76,10 +90,7 @@
                   >All-time</a
                 >
               </li>
-              <li
-                class="nav-item"
-                v-for="d in ['2020s', '2010s', '2000s', '1990s', '1980s', '1970s', '1960s', '1950s']"
-              >
+              <li class="nav-item" v-for="d in availableDecades">
                 <a
                   :class="'nav-link ' + (decade === d ? 'active' : '')"
                   href="#"
@@ -145,8 +156,8 @@
           },
           releases() {
             if (this.decade !== "") {
-              const maxYear = parseInt(this.decade.substr(0, 4), 10);
-              const minYear = maxYear - 10;
+              const minYear = parseInt(this.decade.substr(0, 4), 10);
+              const maxYear = minYear + 9;
 
               return this.all_releases.filter(
                 (r) => r.release_year >= minYear && r.release_year <= maxYear
@@ -154,10 +165,23 @@
             }
             return this.all_releases;
           },
+          availableDecades() {
+            const decades = new Set(
+              this.all_releases.map(
+                (r) => r.release_year - (r.release_year % 10)
+              )
+            );
+            return Array.from(decades)
+              .sort()
+              .reverse()
+              .map((d) => `${d}s`);
+          },
         },
         methods: {
           setCurrentGenre(genre, depth) {
-            if (depth >= this.path.length) {
+            if (genre === '') {
+              this.path = [];
+            } else if (depth >= this.path.length) {
               this.path.push(genre);
             } else {
               this.path = this.path.slice(0, depth);
@@ -188,7 +212,12 @@
         template: `
             <ul style="list-style: none;">
                 <li v-for="genre in rootGenres">
-                    <small><tag :name="genre" @click="() => setCurrentGenre(genre, depth)">{{ genre }}</genre></small>
+                    <small>
+                      <strong v-if="genre === path[depth]">
+                        <tag :name="genre" @click="() => setCurrentGenre(genre, depth)">{{ genre }}</tag>
+                      </strong>
+                      <tag :name="genre" @click="() => setCurrentGenre(genre, depth)" v-if="depth === path.length">{{ genre }}</tag>
+                    </small>
 
                     <genre-list :genres="genres"
                         :root-genres="this.genres.filter(g => g.parent_genre === genre).map(g => g.child_genre)"
