@@ -18,6 +18,13 @@ python3 -m http.server
 
 Now open http://localhost:8000
 
+## Download Latest Dump
+
+```sh
+rm -rf dump db.sqlite3
+make db.sqlite3
+```
+
 ## Regenerate Data Files
 
 ```sh
