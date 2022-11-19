@@ -15,11 +15,19 @@ dump/mbdump-cover-art-archive.tar.bz2: dump/LATEST
 
 dump/mbdump: dump/mbdump.tar.bz2
 	mkdir -p dump/mbdump
-	tar -xvzf dump/mbdump.tar.bz2 -C dump/mbdump
+	tar -xvzf dump/mbdump.tar.bz2 -C dump/mbdump \
+		mbdump/artist \
+		mbdump/genre \
+		mbdump/artist_credit \
+		mbdump/release_group \
+		mbdump/l_genre_genre
 
 dump/mbdump-derived: dump/mbdump-derived.tar.bz2
 	mkdir -p dump/mbdump-derived
-	tar -xvzf dump/mbdump-derived.tar.bz2 -C dump/mbdump-derived
+	tar -xvzf dump/mbdump-derived.tar.bz2 -C dump/mbdump-derived \
+		mbdump/release_group_meta \
+		mbdump/release_group_tag \
+		mbdump/tag
 
 dump/mbdump-cover-art-archive: dump/mbdump-cover-art-archive.tar.bz2
 	mkdir -p dump/mbdump-cover-art-archive
@@ -30,35 +38,29 @@ db.sqlite3: dump/mbdump dump/mbdump-derived
 	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump/mbdump/artist artist'
 	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump/mbdump/genre genre'
 	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump/mbdump/artist_credit artist_credit'
+	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump/mbdump/release_group release_group'
+	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump/mbdump/l_genre_genre l_genre_genre'
 	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump-derived/mbdump/release_group_meta release_group_meta'
 	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump-derived/mbdump/release_group_tag release_group_tag'
 	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump-derived/mbdump/tag tag'
-	sqlite3 -batch db.sqlite3 '.mode ascii' '.separator "\t" "\n"' '.import dump/mbdump/mbdump/release_group release_group'
 	sqlite3 db.sqlite3 "UPDATE release_group_meta SET rating = NULL WHERE rating = '\N';"
 	sqlite3 db.sqlite3 "UPDATE release_group_meta SET first_release_date_year = NULL WHERE first_release_date_year = '\N';"
 	sqlite3 db.sqlite3 "UPDATE release_group_meta SET first_release_date_month = NULL WHERE first_release_date_month = '\N';"
 	sqlite3 db.sqlite3 "UPDATE release_group_meta SET first_release_date_day = NULL WHERE first_release_date_day = '\N';"
 
-data:
-	mkdir -p data
+static/data:
+	mkdir -p static/data
 
-data/genre: data
-	mkdir -p data/genre
+static/data/genre: static/data
+	mkdir -p static/data/genre
 
-data/genres.json:
+static/data/genres.json: static/data
 	sqlite3 db.sqlite3 '.mode json' '.once $@' "\
-SELECT * \
+SELECT parent_genre, child_genre \
 FROM genre_parents \
-UNION \
-SELECT 'misc', name \
-FROM genre \
-WHERE name NOT IN ( \
-    SELECT parent_genre FROM genre_parents \
-    UNION \
-    SELECT child_genre FROM genre_parents \
-)"
+ORDER BY parent_genre, child_genre"
 
-data/genre/%.json: data/genre
+static/data/genre/%.json: static/data/genre
 	sqlite3 db.sqlite3 '.mode json' '.once $@' "\
 SELECT \
     artist_credit.name as artist, \
@@ -79,7 +81,9 @@ LEFT JOIN genre ON (genre.name = tag.name) \
 JOIN artist_credit ON (artist_credit.id = release_group.artist_credit) \
 WHERE rating IS NOT NULL AND rating_count >= 3 AND count > 0 AND genre.name IN ( \
     WITH RECURSIVE genres(name) AS ( \
-        VALUES('$*') \
+        SELECT DISTINCT parent_genre \
+        FROM genre_parents \
+        WHERE file_name = '$*' \
         UNION \
         SELECT child_genre \
         FROM genre_parents, genres \
@@ -92,7 +96,7 @@ GROUP BY 1, 2, 3, 4, 5, 6, 7, 8 \
 ORDER BY rating DESC, rating_count DESC, count DESC \
 LIMIT 250;"
 
-data/top.json:
+static/data/top.json:
 	sqlite3 db.sqlite3 '.mode json' '.once $@' "\
 SELECT \
     artist_credit.name as artist, \
@@ -122,15 +126,21 @@ clean:
 	rm -rf db.sqlite3
 
 .PHONY: all-data
-all-data: data data/genres.json data/top.json
+all-data: static/data static/data/genres.json static/data/top.json
 	sqlite3 db.sqlite3 '\
 SELECT name \
 FROM genre \
 ORDER BY name;' | while read -r genre ; do \
-		make "data/genre/$$genre.json" ; \
+		make "static/data/genre/$$genre.json" ; \
 	done
 
 .PHONY: deploy
 deploy:
 	aws s3 cp data s3://chartbrainz/data/ --recursive
 	aws s3 cp index.html s3://chartbrainz/
+
+secrets.local.json:
+	cp secrets.sample.json secrets.local.json
+
+offline: secrets.local.json
+	serverless offline -s local --noPrependStageInUrl
