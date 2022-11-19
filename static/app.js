@@ -66,7 +66,7 @@ const app = Vue.createApp({
       if (genre === "") {
         this.load(`./static/data/top.json`);
       } else {
-        this.load(`./static/data/genre/${genre}.json`);
+        this.load(`./static/data/genre/${genre.replace(/\s/g, '-')}.json`);
       }
       this.currentGenre = genre;
     },
@@ -217,7 +217,7 @@ app.component("date", {
 });
 
 app.component("release-row", {
-  props: ["release", "number", "submitRating"],
+  props: ["release", "number", "submitRating", "isLoggedIn"],
   template: `
     <tr>
         <td>
@@ -239,7 +239,8 @@ app.component("release-row", {
         </td>
         <td style="text-align: right">
             <rating-selector :release-group="release.release_group_gid"
-            :rating="ratingFor(release.release_group_gid)" :submit-rating="(releaseGroup, rating) => { this.submitRating(releaseGroup, rating).then(() => this.$forceUpdate()); }"/>
+            :rating="ratingFor(release.release_group_gid)" :submit-rating="(releaseGroup, rating) => { this.submitRating(releaseGroup, rating).then(() => this.$forceUpdate()); }"
+            v-if="isLoggedIn"/>
         </td>
         <td style="text-align: center">{{ release.rating / 20 }}</td>
         <td style="text-align: center">{{ release.rating_count }}</td>

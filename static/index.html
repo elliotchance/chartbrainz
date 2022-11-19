@@ -158,7 +158,8 @@
               </thead>
               <tbody>
                 <template v-for="release, i in releases">
-                  <release-row :release="release" :number="i + 1" :submit-rating="submitRating" />
+                  <release-row :release="release" :number="i + 1"
+                    :submit-rating="submitRating" :is-logged-in="user !== ''" />
                 </template>
               </tbody>
             </table>

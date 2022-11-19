@@ -3,6 +3,9 @@ app: chartbrainz
 service: chartbrainz
 frameworkVersion: '3'
 
+plugins:
+  - serverless-offline
+
 custom:
   customDomain:
     domainName: ${sls:stage}.chartbrainz.com
@@ -23,6 +26,8 @@ provider:
   runtime: nodejs14.x
   memorySize: 128
   environment:
+    # If you get an error here when running locally, make sure you run:
+    #   make secrets.local.json
     OAUTH_CLIENT_ID: ${file(./secrets.${sls:stage}.json):OAuthClientID}
     OAUTH_CLIENT_SECRET: ${file(./secrets.${sls:stage}.json):OAuthClientSecret}
 
