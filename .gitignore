@@ -1,4 +1,7 @@
-data/
-dump/
 .DS_Store
+.serverless/
+static/data/
+dump/
 db.sqlite3
+secrets.prod.json
+node_modules/
