@@ -1,0 +1,73 @@
+org: elliotchance
+app: chartbrainz
+service: chartbrainz
+frameworkVersion: '3'
+
+custom:
+  customDomain:
+    domainName: ${sls:stage}.chartbrainz.com
+    basePath: ''
+    stage: ${sls:stage}
+    createRoute53Record: true
+
+package:
+   include:
+      - handlers/**
+      - node_modules/**
+      - static/**
+   exclude:
+      - "**"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  memorySize: 128
+  environment:
+    OAUTH_CLIENT_ID: ${file(./secrets.${sls:stage}.json):OAuthClientID}
+    OAUTH_CLIENT_SECRET: ${file(./secrets.${sls:stage}.json):OAuthClientSecret}
+
+functions:
+  login:
+    handler: handlers/login.handler
+    events:
+      - http:
+          path: /login
+          method: get
+
+  logout:
+    handler: handlers/logout.handler
+    events:
+      - http:
+          path: /logout
+          method: get
+
+  oauth:
+    handler: handlers/oauth.handler
+    events:
+      - http:
+          path: /oauth
+          method: get
+
+  static:
+    handler: handlers/static.handler
+    events:
+      - http:
+          path: /
+          method: get
+      - http:
+          path: /static/{any+}
+          method: get
+
+  fetch-ratings:
+    handler: handlers/fetch-ratings.handler
+    events:
+      - http:
+          path: /fetch-ratings
+          method: get
+
+  refresh-token:
+    handler: handlers/refresh-token.handler
+    events:
+      - http:
+          path: /refresh-token
+          method: get

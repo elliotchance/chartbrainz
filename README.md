@@ -1,22 +1,18 @@
 ChartBrainz
 ===========
 
-The unofficial way to view charts from MusicBrainz.
+The unofficial way to view charts and manage your ratings on MusicBrainz.
+
+https://chartbrainz.com
 
 Development
 -----------
 
-## Running Locally
+### Local development
 
-If you try to open `index.html` directly your browser will block the data files,
-so they have have to be server through a static web server. Fortunately, there
-is one build into python:
-
-```sh
-python3 -m http.server
+```bash
+serverless offline start
 ```
-
-Now open http://localhost:8000
 
 ## Download Latest Dump
 
@@ -32,8 +28,16 @@ rm -rf data
 make all-data
 ```
 
-## Publish Latest Version
+## Deploy
+
+Development (https://dev.chartbrainz.com)
 
 ```sh
-make deploy
+sls deploy --stage dev
+```
+
+Production (https://chartbrainz.com)
+
+```sh
+sls deploy --stage prod
 ```

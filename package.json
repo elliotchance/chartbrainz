@@ -1,0 +1,11 @@
+{
+  "name": "chartbrainz",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "express": "^4.17.1",
+    "request": "^2.88.2",
+    "serverless-aws-static-file-handler": "^4.0.1",
+    "tough-cookie": "^4.1.2"
+  }
+}
