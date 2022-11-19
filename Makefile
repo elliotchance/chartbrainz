@@ -128,7 +128,7 @@ clean:
 .PHONY: all-data
 all-data: static/data static/data/genres.json static/data/top.json
 	sqlite3 db.sqlite3 '\
-SELECT name \
+SELECT replace(name, " ", "-") \
 FROM genre \
 ORDER BY name;' | while read -r genre ; do \
 		make "static/data/genre/$$genre.json" ; \
