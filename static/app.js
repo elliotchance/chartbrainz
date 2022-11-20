@@ -1,16 +1,57 @@
+const URLState = {
+  set(kv) {
+    const all = { ...URLState.getAll(), ...kv };
+    document.location =
+      "?" +
+      Object.keys(all)
+        .filter((key) => all[key] !== "")
+        .map((key) => {
+          return key + "=" + encodeURIComponent(all[key]);
+        })
+        .join("&");
+  },
+  get(name) {
+    return URLState.getAll()[name] || "";
+  },
+  getAll() {
+    const sPageURL = window.location.search.substring(1),
+      sURLVariables = sPageURL.split("&");
+    let kv = {};
+
+    for (let i = 0; i < sURLVariables.length; i++) {
+      const sParameterName = sURLVariables[i].split("=");
+      if (sParameterName[0] !== "") {
+        kv[sParameterName[0]] =
+          sParameterName[1] === undefined
+            ? ""
+            : decodeURIComponent(sParameterName[1]);
+      }
+    }
+
+    return kv;
+  },
+};
+
 const app = Vue.createApp({
   data() {
     $.getScript(`./static/data/genres.json`, (data) => {
       this.genres = JSON.parse(data);
+      this.currentGenre = URLState.get("genre");
+      if (this.currentGenre === "") {
+        this.load(`./static/data/top.json`);
+      } else {
+        this.path = pathForGenre(this.genres, this.currentGenre);
+        this.load(
+          `./static/data/genre/${this.currentGenre.replace(/\s/g, "-")}.json`
+        );
+      }
     });
-
-    this.load(`./static/data/top.json`);
 
     return {
       currentGenre: "",
       all_releases: [],
       genres: [],
-      decade: "",
+      decade: URLState.get("decade"),
       path: [],
       syncStatus: "Sync",
       user: getCookie("user"),
@@ -53,6 +94,10 @@ const app = Vue.createApp({
     },
   },
   methods: {
+    setDecade(decade) {
+      this.decade = decade;
+      URLState.set({ decade: decade });
+    },
     setCurrentGenre(genre, depth) {
       if (genre === "") {
         this.path = [];
@@ -63,26 +108,21 @@ const app = Vue.createApp({
         this.path[depth] = genre;
       }
 
-      if (genre === "") {
-        this.load(`./static/data/top.json`);
-      } else {
-        this.load(`./static/data/genre/${genre.replace(/\s/g, "-")}.json`);
-      }
       this.currentGenre = genre;
+
+      // When the genre changes we should also reset the decade.
+      URLState.set({ genre, decade: "" });
     },
     setPath(path) {
       this.path = path;
       if (path.length > 0) {
-        this.currentGenre = path[path.length-1];
+        this.currentGenre = path[path.length - 1];
       } else {
-        this.currentGenre = '';
+        this.currentGenre = "";
       }
 
-      if (this.currentGenre === "") {
-        this.load(`./static/data/top.json`);
-      } else {
-        this.load(`./static/data/genre/${this.currentGenre.replace(/\s/g, "-")}.json`);
-      }
+      // When the genre changes we should also reset the decade.
+      URLState.set({ genre, decade: "" });
     },
     load(path) {
       $.getScript(path)
@@ -237,29 +277,8 @@ app.component("genre-selector", {
       return [...all].filter((genre) => genre.indexOf(this.filter) >= 0).sort();
     },
     selectGenre(genre) {
-      this.filter = '';
-      this.setPath(this.pathForGenre(genre));
-    },
-    pathForGenre(genre) {
-      let path = [genre];
-      let currentGenre = genre;
-
-      // 20 is just a safety measure in case theres a circular reference.
-      for (let i = 0; i < 20; i++) {
-        const parents = this.genres.filter(
-          (g) => g.child_genre === currentGenre
-        );
-
-        if (parents.length === 0) {
-          break;
-        }
-
-        const parent = parents[0].parent_genre;
-        path.unshift(parent);
-        currentGenre = parent;
-      }
-
-      return path;
+      this.filter = "";
+      this.setPath(pathForGenre(this.genres, genre));
     },
   },
 });
@@ -429,4 +448,24 @@ function getCookie(cname) {
     }
   }
   return "";
+}
+
+function pathForGenre(genres, genre) {
+  let path = [genre];
+  let currentGenre = genre;
+
+  // 20 is just a safety measure in case theres a circular reference.
+  for (let i = 0; i < 20; i++) {
+    const parents = genres.filter((g) => g.child_genre === currentGenre);
+
+    if (parents.length === 0) {
+      break;
+    }
+
+    const parent = parents[0].parent_genre;
+    path.unshift(parent);
+    currentGenre = parent;
+  }
+
+  return path;
 }
