@@ -129,7 +129,7 @@
                 <a
                   :class="'nav-link ' + (decade === '' ? 'active' : '')"
                   href="#"
-                  @click="() => decade = ''"
+                  @click="() => setDecade('')"
                   >All-time</a
                 >
               </li>
@@ -137,7 +137,7 @@
                 <a
                   :class="'nav-link ' + (decade === d ? 'active' : '')"
                   href="#"
-                  @click="() => decade = d"
+                  @click="() => setDecade(d)"
                   >{{ d }}</a
                 >
               </li>
