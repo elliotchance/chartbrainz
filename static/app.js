@@ -66,9 +66,23 @@ const app = Vue.createApp({
       if (genre === "") {
         this.load(`./static/data/top.json`);
       } else {
-        this.load(`./static/data/genre/${genre.replace(/\s/g, '-')}.json`);
+        this.load(`./static/data/genre/${genre.replace(/\s/g, "-")}.json`);
       }
       this.currentGenre = genre;
+    },
+    setPath(path) {
+      this.path = path;
+      if (path.length > 0) {
+        this.currentGenre = path[path.length-1];
+      } else {
+        this.currentGenre = '';
+      }
+
+      if (this.currentGenre === "") {
+        this.load(`./static/data/top.json`);
+      } else {
+        this.load(`./static/data/genre/${this.currentGenre.replace(/\s/g, "-")}.json`);
+      }
     },
     load(path) {
       $.getScript(path)
@@ -159,7 +173,7 @@ const app = Vue.createApp({
       const resp = await $.ajax({
         type: "GET",
         url: "https://chartbrainz.com/refresh-token",
-        dataType: 'json',
+        dataType: "json",
       });
 
       document.cookie = `bearer=${resp.access_token}; Max-Age=${resp.expires_in}`;
@@ -169,22 +183,106 @@ const app = Vue.createApp({
   },
 });
 
+app.component("genre-selector", {
+  props: [
+    "genres",
+    "rootGenres",
+    "setCurrentGenre",
+    "path",
+    "depth",
+    "currentGenre",
+    "setPath",
+  ],
+  data() {
+    return {
+      filter: "",
+    };
+  },
+  template: `
+    <form autocomplete="no">
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="Filter genres..."
+          v-model="filter">
+      </div>
+      <div v-if="filter !== ''">
+        <ul>
+          <li v-for="genre in this.filteredGenres()">
+            <small>
+              <tag :name="genre" @click="() => selectGenre(genre)">{{ genre }}</tag>
+            </small>
+          </li>
+        </ul>
+      </div>
+      <div v-if="filter === ''">
+        <a href="#" @click="() => setCurrentGenre('', 0)">
+          <strong v-if="currentGenre === ''">All Genres</strong>
+          <span v-if="currentGenre !== ''">All Genres</span>
+        </a>
+        <genre-list
+          :genres="genres"
+          :root-genres="rootGenres"
+          :set-current-genre="setCurrentGenre"
+          :depth="0"
+          :path="path"
+        />
+      </div>
+    </form>`,
+  methods: {
+    filteredGenres() {
+      const all = new Set([
+        ...this.genres.map((genre) => genre.parent_genre),
+        ...this.genres.map((genre) => genre.child_genre),
+      ]);
+
+      return [...all].filter((genre) => genre.indexOf(this.filter) >= 0).sort();
+    },
+    selectGenre(genre) {
+      this.filter = '';
+      this.setPath(this.pathForGenre(genre));
+    },
+    pathForGenre(genre) {
+      let path = [genre];
+      let currentGenre = genre;
+
+      // 20 is just a safety measure in case theres a circular reference.
+      for (let i = 0; i < 20; i++) {
+        const parents = this.genres.filter(
+          (g) => g.child_genre === currentGenre
+        );
+
+        if (parents.length === 0) {
+          break;
+        }
+
+        const parent = parents[0].parent_genre;
+        path.unshift(parent);
+        currentGenre = parent;
+      }
+
+      return path;
+    },
+  },
+});
+
 app.component("genre-list", {
   props: ["genres", "rootGenres", "setCurrentGenre", "path", "depth"],
   template: `
     <ul style="list-style: none;">
-        <li v-for="genre in rootGenres">
-            <small>
-                <strong v-if="genre === path[depth]">
-                <tag :name="genre" @click="() => setCurrentGenre(genre, depth)">{{ genre }}</tag>
-                </strong>
-                <tag :name="genre" @click="() => setCurrentGenre(genre, depth)" v-if="depth === path.length">{{ genre }}</tag>
-            </small>
+      <li v-for="genre in rootGenres">
+        <small>
+          <strong v-if="genre === path[depth]">
+          <tag :name="genre" @click="() => setCurrentGenre(genre, depth)">
+            {{ genre }}
+          </tag>
+          </strong>
+          <tag :name="genre" @click="() => setCurrentGenre(genre, depth)"
+            v-if="depth === path.length">{{ genre }}</tag>
+        </small>
 
-            <genre-list :genres="genres"
-                :root-genres="this.genres.filter(g => g.parent_genre === genre).map(g => g.child_genre)"
-                :set-current-genre="setCurrentGenre" v-if="genre === path[depth]" :path="path" :depth="depth+1" />
-        </li>
+        <genre-list :genres="genres"
+          :root-genres="this.genres.filter(g => g.parent_genre === genre).map(g => g.child_genre)"
+          :set-current-genre="setCurrentGenre" v-if="genre === path[depth]" :path="path" :depth="depth+1" />
+      </li>
     </ul>`,
 });
 
