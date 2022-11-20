@@ -15,7 +15,10 @@
       rel="stylesheet"
       href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"
     />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
 
     <script src="https://unpkg.com/vue@latest/dist/vue.global.js"></script>
     <script
@@ -88,9 +91,7 @@
               >
                 Login
               </a>
-              <span v-if="user">
-                Hi, {{ user }}
-              </span>
+              <span v-if="user"> Hi, {{ user }} </span>
               &nbsp;
               <a
                 class="btn btn-primary"
@@ -107,16 +108,14 @@
             class="col-2"
             style="border-left: solid 1px gray; border-right: solid 1px gray"
           >
-            <a href="#" @click="() => setCurrentGenre('', 0)">
-              <strong v-if="currentGenre === ''">All Genres</strong>
-              <span v-if="currentGenre !== ''">All Genres</span>
-            </a>
-            <genre-list
+            <genre-selector
               :genres="genres"
               :root-genres="rootGenres"
               :set-current-genre="setCurrentGenre"
               :depth="0"
               :path="path"
+              :current-genre="currentGenre"
+              :set-path="setPath"
             />
           </div>
 
@@ -158,8 +157,12 @@
               </thead>
               <tbody>
                 <template v-for="release, i in releases">
-                  <release-row :release="release" :number="i + 1"
-                    :submit-rating="submitRating" :is-logged-in="user !== ''" />
+                  <release-row
+                    :release="release"
+                    :number="i + 1"
+                    :submit-rating="submitRating"
+                    :is-logged-in="user !== ''"
+                  />
                 </template>
               </tbody>
             </table>
