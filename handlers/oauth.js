@@ -53,9 +53,9 @@ module.exports.handler = (event, context, callback) => {
             multiValueHeaders: {
               Location: [domain],
               "Set-Cookie": [
-                `bearer=${resp.access_token}; Max-Age=${resp.expires_in}`,
-                `refresh=${resp.refresh_token}`,
-                `user=${userInfo.sub}`,
+                `bearer=${resp.access_token}; path=/; Max-Age=${resp.expires_in};`,
+                `refresh=${resp.refresh_token}; path=/;`,
+                `user=${userInfo.sub}; path=/;`,
               ],
             },
           });

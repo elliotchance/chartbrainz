@@ -184,7 +184,6 @@ const app = Vue.createApp({
       this.releaseSearchResult = Array.from(
         releaseResult.getElementsByTagName("release-group")
       ).map(this.parseReleaseXML);
-      console.log(this.releaseSearchResult);
 
       this.view = "search";
     },
@@ -462,6 +461,56 @@ app.component("release-row", {
   },
 });
 
+app.component("release-search-results", {
+  props: ["releaseSearchResult", "submitRating"],
+  data() {
+    return {
+      refreshKey: Math.floor(Math.random() * 1e6),
+    };
+  },
+  template: `
+    <card title="Releases" title-class="h5" :close="closeSearch">
+      <span v-if="releaseSearchResult.length === 0">No releases.</span>
+      <table class="table" v-if="releaseSearchResult.length > 0">
+        <tbody>
+          <tr v-for="release in releaseSearchResult">
+            <td style="width: 110px">
+              <img
+                :src="'https://coverartarchive.org/release-group/' + release.id + '/front'"
+                :alt="release.release_group"
+                width="100"
+              />
+            </td>
+            <td>
+              <a
+                :href="'https://musicbrainz.org/release-group/' + release.id"
+                >{{ release.title }}</a
+              >
+              ({{ release.type }})<br />{{ release.artist }}<br />
+              <date
+                :year="release.releaseDate?.split('-')[0]"
+                :month="release.releaseDate?.split('-')[1]"
+                :day="release.releaseDate?.split('-')[2]"
+              v-if="release.releaseDate" /><br />{{ (release.tags || []).join(',') }}
+            </td>
+            <td style="text-align: right">
+              <rating-selector
+                :release-group="release.id"
+                :rating="ratingFor(release.id)"
+                :submit-rating="(releaseGroup, rating) => { this.submitRating(releaseGroup, rating).then(() => this.refreshKey = Math.floor(Math.random() * 1e6)) }"
+                v-if="user !== ''"
+                :refresh-key="refreshKey"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </card>`,
+    methods: {
+      ratingFor,
+    }
+});
+
 app.component("raw-tags", {
   props: ["tags", "cls"],
   template: `<div>
@@ -551,12 +600,12 @@ app.component("rating-selector", {
   <div class="dropdown">
     <button :class="'btn btn-' + (rating === 0 ? 'light' : 'secondary') + ' dropdown-toggle'"
         type="button" data-bs-toggle="dropdown" aria-expanded="false">
-        <stars :rating="rating">
+        <stars :rating="rating" />
     </button>
     <ul class="dropdown-menu">
         <li v-for="rating in [0, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10]">
             <button class="dropdown-item" type="button" @click="() => this.submitRating(releaseGroup, rating)">
-                <stars :rating="rating">
+                <stars :rating="rating" />
             </button>
         </li>
     </ul>
