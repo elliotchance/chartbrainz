@@ -48,21 +48,33 @@
         text-decoration: none;
       }
 
-      ul {
+      ul.genre {
         margin-left: 1em;
         padding: 0;
+        list-style: none;
       }
     </style>
   </head>
   <body>
     <div id="app">
       <div class="container">
-        <div class="row" style="border-bottom: solid 1px gray">
-          <div class="col-6">
+        <div class="row">
+          <div class="col-3">
             <h1>ChartBrainz</h1>
           </div>
-          <div class="col-6">
+          <div class="col-9">
             <div style="text-align: right; margin-top: 10px">
+              <input
+                type="text"
+                style="width: 200px; border: solid 1px gray"
+                v-model="search"
+                @keyup.enter="doSearch"
+              />
+              &nbsp;
+              <button type="button" class="btn btn-primary" @click="doSearch">
+                Search
+              </button>
+              &nbsp;
               <a
                 class="btn btn-primary"
                 href="https://github.com/elliotchance/chartbrainz/issues"
@@ -84,88 +96,148 @@
                 </button>
               </div>
               &nbsp;
-              <a
-                class="btn btn-primary"
-                href="https://chartbrainz.com/login"
-                v-if="!user"
-              >
-                Login
-              </a>
+              <a class="btn btn-primary" href="/login" v-if="!user"> Login </a>
               <span v-if="user"> Hi, {{ user }} </span>
               &nbsp;
-              <a
-                class="btn btn-primary"
-                v-if="user"
-                href="https://chartbrainz.com/logout"
-              >
-                Logout
-              </a>
+              <a class="btn btn-primary" v-if="user" href="/logout"> Logout </a>
             </div>
           </div>
         </div>
         <div class="row">
-          <div
-            class="col-2"
-            style="border-left: solid 1px gray; border-right: solid 1px gray"
-          >
-            <genre-selector
-              :genres="genres"
-              :root-genres="rootGenres"
-              :set-current-genre="setCurrentGenre"
-              :depth="0"
-              :path="path"
-              :current-genre="currentGenre"
-              :set-path="setPath"
-            />
+          <div class="col">&nbsp;</div>
+        </div>
+        <div class="row" v-if="view === 'search'">
+          <div class="col-6">
+            <card title="Artists" title-class="h5" :close="closeSearch">
+              <span v-if="artistSearchResult.length === 0">No artists.</span>
+              <ul
+                class="list-group list-group-flush"
+                v-if="artistSearchResult.length > 0"
+              >
+                <li
+                  class="list-group-item"
+                  v-for="artist in artistSearchResult"
+                >
+                  <span
+                    class="float-end"
+                    @click="() => doArtistSearch(artist.id)"
+                  >
+                    <span class="link-primary">search</span>
+                    <chevron-right />
+                  </span>
+                  <artist
+                    :name="artist.name"
+                    :disambiguation="artist.disambiguation"
+                  />
+                </li>
+              </ul>
+            </card>
+          </div>
+          <div class="col-6">
+            <card title="Releases" title-class="h5" :close="closeSearch">
+              <span v-if="releaseSearchResult.length === 0">No releases.</span>
+              <table class="table" v-if="releaseSearchResult.length > 0">
+                <tbody>
+                  <tr v-for="release in releaseSearchResult">
+                    <td style="width: 110px">
+                      <img
+                        :src="'https://coverartarchive.org/release-group/' + release.id + '/front'"
+                        :alt="release.release_group"
+                        width="100"
+                      />
+                    </td>
+                    <td>
+                      <a
+                        :href="'https://musicbrainz.org/release-group/' + release.id"
+                        >{{ release.title }}</a
+                      >
+                      ({{ release.type }})<br />{{ release.artist }}<br />
+                      <date
+                        :year="release.releaseDate?.split('-')[0]"
+                        :month="release.releaseDate?.split('-')[1]"
+                        :day="release.releaseDate?.split('-')[2]"
+                      v-if="release.releaseDate" /><br />{{ (release.tags || []).join(',') }}
+                    </td>
+                    <td style="text-align: right">
+                      <rating-selector
+                        :release-group="release.id"
+                        :rating="ratingFor(release.id)"
+                        :submit-rating="(releaseGroup, rating) => { this.submitRating(releaseGroup, rating).then(() => this.$forceUpdate()); }"
+                        v-if="user !== ''"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </card>
+          </div>
+        </div>
+        <div class="row" v-if="view === 'chart'">
+          <div class="col-3">
+            <card title="Filter" title-class="h5">
+              <div class="container">
+                <br />
+                <ul class="nav nav-pills">
+                  <li class="nav-item">
+                    <a
+                      :class="'nav-link ' + (decade === '' ? 'active' : '')"
+                      href="#"
+                      @click="() => setDecade('')"
+                      >All-time</a
+                    >
+                  </li>
+                  <li class="nav-item" v-for="d in availableDecades">
+                    <a
+                      :class="'nav-link ' + (decade === d ? 'active' : '')"
+                      href="#"
+                      @click="() => setDecade(d)"
+                      >{{ d }}</a
+                    >
+                  </li>
+                </ul>
+                <br />
+                <genre-selector
+                  :genres="genres"
+                  :root-genres="rootGenres"
+                  :set-current-genre="setCurrentGenre"
+                  :depth="0"
+                  :path="path"
+                  :current-genre="currentGenre"
+                  :set-path="setPath"
+                />
+              </div>
+            </card>
           </div>
 
-          <div class="col-10" style="border-right: solid 1px gray">
-            <h1>
-              Top {{ currentGenre }} releases of {{ decade ? 'the ' + decade :
-              'all-time' }}
-            </h1>
-            <ul class="nav nav-pills">
-              <li class="nav-item">
-                <a
-                  :class="'nav-link ' + (decade === '' ? 'active' : '')"
-                  href="#"
-                  @click="() => setDecade('')"
-                  >All-time</a
-                >
-              </li>
-              <li class="nav-item" v-for="d in availableDecades">
-                <a
-                  :class="'nav-link ' + (decade === d ? 'active' : '')"
-                  href="#"
-                  @click="() => setDecade(d)"
-                  >{{ d }}</a
-                >
-              </li>
-            </ul>
-            <br />
-            <h2 v-if="releases.length === 0">No releases.</h2>
-            <table class="table" v-if="releases.length > 0">
-              <thead>
-                <tr>
-                  <th width="100">&nbsp;</th>
-                  <th width="50">&nbsp;</th>
-                  <th>&nbsp;</th>
-                  <th>&nbsp;</th>
-                  <th style="text-align: center">Average</th>
-                  <th style="text-align: center">Ratings</th>
-                </tr>
-              </thead>
-              <tbody>
-                <template v-for="release, i in releases">
-                  <release-row
-                    :release="release"
-                    :number="i + 1"
-                    :submit-rating="submitRating"
-                    :is-logged-in="user !== ''"
-                  />
-                </template>
-              </tbody>
-            </table>
+          <div class="col-9">
+            <card
+              :title="`Top ${currentGenre} releases of ${decade ? 'the ' + decade : 'all-time'}`"
+              title-class="h5"
+            >
+              <h2 v-if="releases.length === 0">No releases.</h2>
+              <table class="table" v-if="releases.length > 0">
+                <thead>
+                  <tr>
+                    <th width="100">&nbsp;</th>
+                    <th width="50">&nbsp;</th>
+                    <th>&nbsp;</th>
+                    <th>&nbsp;</th>
+                    <th style="text-align: center">Average</th>
+                    <th style="text-align: center">Ratings</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-for="release, i in releases">
+                    <release-row
+                      :release="release"
+                      :number="i + 1"
+                      :submit-rating="submitRating"
+                      :is-logged-in="user !== ''"
+                    />
+                  </template>
+                </tbody>
+              </table>
+            </card>
           </div>
         </div>
       </div>

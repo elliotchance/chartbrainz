@@ -31,7 +31,7 @@ Create the environment variables (you may need to update this config file
 depending on which features you need):
 
 ```bash
-make secrets.dev.json
+make config/dev.json
 ```
 
 Now run it with:

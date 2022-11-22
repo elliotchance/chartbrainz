@@ -13,7 +13,7 @@ module.exports.handler = async (event, context) => {
   // See https://musicbrainz.org/doc/Development/OAuth2#Scopes
   const scopes = ["profile", "rating"];
   const clientID = process.env.OAUTH_CLIENT_ID;
-  const redirectURI = "https://chartbrainz.com/oauth";
+  const redirectURI = process.env.OAUTH_REDIRECT_URI;
 
   const authorizeURL =
   "https://musicbrainz.org/oauth2/authorize?response_type=code&scope=" +

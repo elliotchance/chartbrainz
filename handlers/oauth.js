@@ -5,7 +5,8 @@ module.exports.handler = (event, context, callback) => {
   const code = event.queryStringParameters.code;
   const clientKey = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
-  const redirectURI = "https://chartbrainz.com/oauth";
+  const redirectURI = process.env.OAUTH_REDIRECT_URI;
+  const domain = process.env.DOMAIN;
 
   request(
     {
@@ -50,7 +51,7 @@ module.exports.handler = (event, context, callback) => {
           callback(null, {
             statusCode: 302,
             multiValueHeaders: {
-              Location: ["https://chartbrainz.com"],
+              Location: [domain],
               "Set-Cookie": [
                 `bearer=${resp.access_token}; Max-Age=${resp.expires_in}`,
                 `refresh=${resp.refresh_token}`,
