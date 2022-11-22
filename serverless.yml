@@ -27,9 +27,11 @@ provider:
   memorySize: 128
   environment:
     # If you get an error here when running locally, make sure you run:
-    #   make secrets.local.json
-    OAUTH_CLIENT_ID: ${file(./secrets.${sls:stage}.json):OAuthClientID}
-    OAUTH_CLIENT_SECRET: ${file(./secrets.${sls:stage}.json):OAuthClientSecret}
+    #   make config/local.json
+    OAUTH_CLIENT_ID: ${file(./config/${sls:stage}.json):OAuthClientID}
+    OAUTH_CLIENT_SECRET: ${file(./config/${sls:stage}.json):OAuthClientSecret}
+    OAUTH_REDIRECT_URI: ${file(./config/${sls:stage}.json):OAuthRedirectURI}
+    DOMAIN: ${file(./config/${sls:stage}.json):Domain}
 
 functions:
   login:

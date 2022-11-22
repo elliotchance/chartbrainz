@@ -59,6 +59,10 @@ const app = Vue.createApp({
         window.localStorage.getItem("stat:rating_count") || "0",
         10
       ),
+      search: "",
+      releaseSearchResult: [],
+      artistSearchResult: [],
+      view: "chart",
     };
   },
   computed: {
@@ -94,6 +98,96 @@ const app = Vue.createApp({
     },
   },
   methods: {
+    async doSearch() {
+      const releaseResult = await $.ajax({
+        type: "GET",
+        url: `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(
+          this.search
+        )}`,
+        dataType: "xml",
+      });
+
+      this.releaseSearchResult = Array.from(
+        releaseResult.childNodes[0].childNodes[0].childNodes
+      ).map(this.parseReleaseXML);
+
+      const artistResult = await $.ajax({
+        type: "GET",
+        url: `https://musicbrainz.org/ws/2/artist/?query=${encodeURIComponent(
+          this.search
+        )}`,
+        dataType: "xml",
+      });
+
+      this.artistSearchResult = Array.from(
+        artistResult.childNodes[0].childNodes[0].childNodes
+      ).map((r) => {
+        const data = {
+          id: r.attributes["id"].value,
+          type: r.attributes["type"]?.value,
+          score: r.attributes["ns2:score"]?.value,
+        };
+        r.childNodes.forEach((child) => {
+          if (child.tagName === "name") {
+            data.name = child.textContent;
+          }
+          if (child.tagName === "gender") {
+            data.gender = child.textContent;
+          }
+          if (child.tagName === "disambiguation") {
+            data.disambiguation = child.textContent;
+          }
+        });
+
+        return data;
+      });
+
+      this.view = "search";
+    },
+    closeSearch() {
+      this.search = '';
+      this.view = 'chart';
+    },
+    parseReleaseXML(r) {
+      const data = {
+        id: r.attributes["id"].value,
+        type: r.attributes["type"]?.value,
+        score: r.attributes["ns2:score"]?.value,
+      };
+      r.childNodes.forEach((child) => {
+        if (child.tagName === "title") {
+          data.title = child.textContent;
+        }
+        if (child.tagName === "first-release-date") {
+          data.releaseDate = child.textContent;
+        }
+        if (child.tagName === "artist-credit") {
+          // TODO: This only uses the first artist credit.
+          data.artist = child.childNodes[0]?.childNodes[0]?.textContent;
+        }
+        if (child.tagName === "tag-list") {
+          data.tags = Array.from(child.childNodes).map(
+            (tag) => tag.childNodes[0]?.textContent
+          );
+        }
+      });
+
+      return data;
+    },
+    async doArtistSearch(artistID) {
+      const releaseResult = await $.ajax({
+        type: "GET",
+        url: `https://musicbrainz.org/ws/2/artist/${artistID}?inc=release-groups`,
+        dataType: "xml",
+      });
+
+      this.releaseSearchResult = Array.from(
+        releaseResult.getElementsByTagName("release-group")
+      ).map(this.parseReleaseXML);
+      console.log(this.releaseSearchResult);
+
+      this.view = "search";
+    },
     setDecade(decade) {
       this.decade = decade;
       URLState.set({ decade: decade });
@@ -144,7 +238,7 @@ const app = Vue.createApp({
 
         const result = await $.ajax({
           type: "GET",
-          url: `https://chartbrainz.com/fetch-ratings?user=${user}&page=${page}`,
+          url: `/fetch-ratings?user=${user}&page=${page}`,
           dataType: "json",
         });
         result.ratings.forEach((r) => {
@@ -212,7 +306,7 @@ const app = Vue.createApp({
 
       const resp = await $.ajax({
         type: "GET",
-        url: "https://chartbrainz.com/refresh-token",
+        url: "/refresh-token",
         dataType: "json",
       });
 
@@ -220,6 +314,7 @@ const app = Vue.createApp({
 
       return resp.access_token;
     },
+    ratingFor,
   },
 });
 
@@ -245,7 +340,7 @@ app.component("genre-selector", {
           v-model="filter">
       </div>
       <div v-if="filter !== ''">
-        <ul>
+        <ul class="genre">
           <li v-for="genre in this.filteredGenres()">
             <small>
               <tag :name="genre" @click="() => selectGenre(genre)">{{ genre }}</tag>
@@ -286,7 +381,7 @@ app.component("genre-selector", {
 app.component("genre-list", {
   props: ["genres", "rootGenres", "setCurrentGenre", "path", "depth"],
   template: `
-    <ul style="list-style: none;">
+    <ul class="genre">
       <li v-for="genre in rootGenres">
         <small>
           <strong v-if="genre === path[depth]">
@@ -312,7 +407,7 @@ app.component("tag", {
 
 app.component("date", {
   props: ["year", "month", "day"],
-  template: `{{ day }} {{ monthName }} {{ year }}`,
+  template: "{{ day ? parseInt(`${day}`, 10) : '' }} {{ monthName }} {{ year }}",
   computed: {
     monthName() {
       return [
@@ -328,7 +423,7 @@ app.component("date", {
         "October",
         "November",
         "December",
-      ][this.month - 1];
+      ][parseInt(`${this.month}`) - 1];
     },
   },
 });
@@ -363,12 +458,7 @@ app.component("release-row", {
         <td style="text-align: center">{{ release.rating_count }}</td>
     </tr>`,
   methods: {
-    ratingFor(releaseGroup) {
-      return parseInt(
-        window.localStorage[`release_group:${releaseGroup}:rating`] || "0",
-        10
-      );
-    },
+    ratingFor,
   },
 });
 
@@ -405,6 +495,7 @@ app.component("stars", {
         <span v-if="rating === 0">no rating</span>
         <i class="fa fa-star" v-for="n in wholeStars"></i>
         <i class="fa fa-star-half-full" v-if="halfStar"></i>
+        <span v-if="rating > 0">&nbsp;({{ (rating / 20).toFixed(1) }})</span>
       </span>`,
   computed: {
     wholeStars() {
@@ -414,6 +505,44 @@ app.component("stars", {
       return this.rating - Math.floor(this.rating / 20) * 20 >= 10;
     },
   },
+});
+
+app.component("card", {
+  props: ["title", "titleClass", "close"],
+  template: `
+    <div class="card">
+      <div :class="'card-header ' + titleClass">
+        {{ title }}
+        <button type="button" class="btn-close float-end" aria-label="Close" @click="close" v-if="close"></button>
+      </div>
+      <slot />
+    </div>`,
+});
+
+app.component("artist", {
+  props: ["name", "disambiguation"],
+  template: `
+    <span>
+      {{ name }}
+      <span v-if="disambiguation" class="text-muted">({{ disambiguation }})</span>
+    </span>`
+});
+
+app.component("chevron-right", {
+  template: `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      fill="currentColor"
+      class="bi bi-chevron-right"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill-rule="evenodd"
+        d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"
+      />
+    </svg>`
 });
 
 app.component("rating-selector", {
@@ -468,4 +597,11 @@ function pathForGenre(genres, genre) {
   }
 
   return path;
+}
+
+function ratingFor(releaseGroup) {
+  return parseInt(
+    window.localStorage[`release_group:${releaseGroup}:rating`] || "0",
+    10
+  );
 }

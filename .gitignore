@@ -3,7 +3,7 @@
 static/data/
 dump/
 db.sqlite3
-secrets.prod.json
-secrets.local.json
-secrets.dev.json
+config/prod.json
+config/local.json
+config/dev.json
 node_modules/

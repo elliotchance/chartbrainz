@@ -139,8 +139,8 @@ deploy:
 	aws s3 cp data s3://chartbrainz/data/ --recursive
 	aws s3 cp index.html s3://chartbrainz/
 
-secrets.local.json:
-	cp secrets.sample.json secrets.local.json
+config/local.json:
+	cp config/sample.json config/local.json
 
-offline: secrets.local.json
+offline: config/local.json
 	serverless offline -s local --noPrependStageInUrl

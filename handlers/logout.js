@@ -10,6 +10,7 @@ module.exports.handler = (event, context, callback) => {
 
   const clientKey = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
+  const domain = process.env.DOMAIN;
 
   request(
     {
@@ -33,7 +34,7 @@ module.exports.handler = (event, context, callback) => {
       callback(null, {
         statusCode: 302,
         multiValueHeaders: {
-          Location: ["https://chartbrainz.com"],
+          Location: [domain],
           "Set-Cookie": [
             `bearer=;expires=Thu, 21 Sep 1979 00:00:01 UTC;`,
             `refresh=;expires=Thu, 21 Sep 1979 00:00:01 UTC;`,
