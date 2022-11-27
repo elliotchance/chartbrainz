@@ -433,7 +433,7 @@ app.component("release-row", {
     <tr>
         <td>
         <img
-            :src="'https://coverartarchive.org/release-group/' + release.release_group_gid + '/front'"
+            :src="'https://coverartarchive.org/release-group/' + release.release_group_gid + '/front-250'"
             :alt="release.release_group"
             width="100"
         />
@@ -476,7 +476,7 @@ app.component("release-search-results", {
           <tr v-for="release in releaseSearchResult">
             <td style="width: 110px">
               <img
-                :src="'https://coverartarchive.org/release-group/' + release.id + '/front'"
+                :src="'https://coverartarchive.org/release-group/' + release.id + '/front-250'"
                 :alt="release.release_group"
                 width="100"
               />
