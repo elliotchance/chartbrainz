@@ -1,71 +1,16 @@
-ChartBrainz
-===========
+# Vue 3 + TypeScript + Vite
 
-The unofficial way to view charts and manage your ratings on MusicBrainz.
+This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
 
-https://chartbrainz.com
+## Recommended IDE Setup
 
-Features
---------
+- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
 
-1. **View up to 250 releases for each genre.** Since there isn't much ratings
-data, the threshold to be included in the chart is very low, only 3 ratings.
-2. **Genre charts are hierarchical.** So when looking at rock, you see all the
-genres and subgenera included.
-3. **Login to MusicBrainz to sync your ratings.** You see your ratings overlayed
-on the charts.
-4. **Submit ratings.** On any chart item with half-star accuracy.
+## Type Support For `.vue` Imports in TS
 
-Development
------------
+Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
 
-## Local development
+1. Run `Extensions: Show Built-in Extensions` from VS Code's command palette, look for `TypeScript and JavaScript Language Features`, then right click and select `Disable (Workspace)`. By default, Take Over mode will enable itself if the default TypeScript extension is disabled.
+2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
 
-Install/update any required packages:
-
-```sh
-npm install
-```
-
-Create the environment variables (you may need to update this config file
-depending on which features you need):
-
-```bash
-make config/dev.json
-```
-
-Now run it with:
-
-```bash
-make offline
-```
-
-Open your browser to: http://localhost:3000
-
-## Download Latest Dump
-
-```sh
-rm -rf dump db.sqlite3
-make db.sqlite3
-```
-
-## Regenerate Data Files
-
-```sh
-rm -rf static/data
-make all-data
-```
-
-## Deploy
-
-Development (https://dev.chartbrainz.com)
-
-```sh
-sls deploy --stage dev
-```
-
-Production (https://chartbrainz.com)
-
-```sh
-sls deploy --stage prod
-```
+You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).

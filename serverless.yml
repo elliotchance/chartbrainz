@@ -78,3 +78,10 @@ functions:
       - http:
           path: /refresh-token
           method: get
+
+  v1-chart:
+    handler: handlers/v1/chart.handler
+    events:
+      - http:
+          path: /v1/chart
+          method: get
