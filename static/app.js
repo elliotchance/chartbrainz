@@ -1,36 +1,3 @@
-const URLState = {
-  set(kv) {
-    const all = { ...URLState.getAll(), ...kv };
-    document.location =
-      "?" +
-      Object.keys(all)
-        .filter((key) => all[key] !== "")
-        .map((key) => {
-          return key + "=" + encodeURIComponent(all[key]);
-        })
-        .join("&");
-  },
-  get(name) {
-    return URLState.getAll()[name] || "";
-  },
-  getAll() {
-    const sPageURL = window.location.search.substring(1),
-      sURLVariables = sPageURL.split("&");
-    let kv = {};
-
-    for (let i = 0; i < sURLVariables.length; i++) {
-      const sParameterName = sURLVariables[i].split("=");
-      if (sParameterName[0] !== "") {
-        kv[sParameterName[0]] =
-          sParameterName[1] === undefined
-            ? ""
-            : decodeURIComponent(sParameterName[1]);
-      }
-    }
-
-    return kv;
-  },
-};
 
 const app = Vue.createApp({
   data() {
@@ -318,62 +285,8 @@ const app = Vue.createApp({
 });
 
 app.component("genre-selector", {
-  props: [
-    "genres",
-    "rootGenres",
-    "setCurrentGenre",
-    "path",
-    "depth",
-    "currentGenre",
-    "setPath",
-  ],
-  data() {
-    return {
-      filter: "",
-    };
-  },
-  template: `
-    <form autocomplete="no">
-      <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="Filter genres..."
-          v-model="filter">
-      </div>
-      <div v-if="filter !== ''">
-        <ul class="genre">
-          <li v-for="genre in this.filteredGenres()">
-            <small>
-              <tag :name="genre" @click="() => selectGenre(genre)">{{ genre }}</tag>
-            </small>
-          </li>
-        </ul>
-      </div>
-      <div v-if="filter === ''">
-        <a href="#" @click="() => setCurrentGenre('', 0)">
-          <strong v-if="currentGenre === ''">All Genres</strong>
-          <span v-if="currentGenre !== ''">All Genres</span>
-        </a>
-        <genre-list
-          :genres="genres"
-          :root-genres="rootGenres"
-          :set-current-genre="setCurrentGenre"
-          :depth="0"
-          :path="path"
-        />
-      </div>
-    </form>`,
+  template: ``,
   methods: {
-    filteredGenres() {
-      const all = new Set([
-        ...this.genres.map((genre) => genre.parent_genre),
-        ...this.genres.map((genre) => genre.child_genre),
-      ]);
-
-      return [...all].filter((genre) => genre.indexOf(this.filter) >= 0).sort();
-    },
-    selectGenre(genre) {
-      this.filter = "";
-      this.setPath(pathForGenre(this.genres, genre));
-    },
   },
 });
 
@@ -611,46 +524,3 @@ app.component("rating-selector", {
     </ul>
     </div>`,
 });
-
-function getCookie(cname) {
-  let name = cname + "=";
-  let decodedCookie = decodeURIComponent(document.cookie);
-  let ca = decodedCookie.split(";");
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == " ") {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) == 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return "";
-}
-
-function pathForGenre(genres, genre) {
-  let path = [genre];
-  let currentGenre = genre;
-
-  // 20 is just a safety measure in case theres a circular reference.
-  for (let i = 0; i < 20; i++) {
-    const parents = genres.filter((g) => g.child_genre === currentGenre);
-
-    if (parents.length === 0) {
-      break;
-    }
-
-    const parent = parents[0].parent_genre;
-    path.unshift(parent);
-    currentGenre = parent;
-  }
-
-  return path;
-}
-
-function ratingFor(releaseGroup) {
-  return parseInt(
-    window.localStorage[`release_group:${releaseGroup}:rating`] || "0",
-    10
-  );
-}
