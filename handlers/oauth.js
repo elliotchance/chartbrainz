@@ -6,7 +6,7 @@ module.exports.handler = (event, context, callback) => {
   const clientKey = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
   const redirectURI = process.env.OAUTH_REDIRECT_URI;
-  const domain = process.env.DOMAIN;
+  const domain = process.env.FRONTEND_DOMAIN;
 
   request(
     {
