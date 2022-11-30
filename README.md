@@ -34,13 +34,15 @@ depending on which features you need):
 make config/dev.json
 ```
 
-Now run it with:
+You will need to run the backend and frontend separately:
 
 ```bash
-make offline
+make backend
 ```
 
-Open your browser to: http://localhost:3000
+```bash
+make frontend
+```
 
 ## Download Latest Dump
 
@@ -61,11 +63,11 @@ make all-data
 Development (https://dev.chartbrainz.com)
 
 ```sh
-sls deploy --stage dev
+make deploy-dev
 ```
 
 Production (https://chartbrainz.com)
 
 ```sh
-sls deploy --stage prod
+make deploy-prod
 ```

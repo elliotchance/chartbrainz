@@ -134,13 +134,23 @@ ORDER BY name;' | while read -r genre ; do \
 		make "static/data/genre/$$genre.json" ; \
 	done
 
-.PHONY: deploy
-deploy:
-	aws s3 cp data s3://chartbrainz/data/ --recursive
-	aws s3 cp index.html s3://chartbrainz/
+.PHONY: deploy-dev
+deploy-dev:
+	./node_modules/.bin/vue-tsc
+	./node_modules/.bin/vite build --mode dev
+	sls deploy --stage dev
+
+.PHONY: deploy-prod
+deploy-prod:
+	./node_modules/.bin/vue-tsc
+	./node_modules/.bin/vite build --mode prod
+	sls deploy --stage prod
 
 config/local.json:
 	cp config/sample.json config/local.json
 
-offline: config/local.json
+backend: config/local.json
 	serverless offline -s local --noPrependStageInUrl
+
+frontend:
+	npm run dev

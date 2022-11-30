@@ -17,7 +17,7 @@ package:
    include:
       - handlers/**
       - node_modules/**
-      - static/**
+      - dist/**
    exclude:
       - "**"
 
@@ -31,7 +31,8 @@ provider:
     OAUTH_CLIENT_ID: ${file(./config/${sls:stage}.json):OAuthClientID}
     OAUTH_CLIENT_SECRET: ${file(./config/${sls:stage}.json):OAuthClientSecret}
     OAUTH_REDIRECT_URI: ${file(./config/${sls:stage}.json):OAuthRedirectURI}
-    DOMAIN: ${file(./config/${sls:stage}.json):Domain}
+    BACKEND_DOMAIN: ${file(./config/${sls:stage}.json):BackendDomain}
+    FRONTEND_DOMAIN: ${file(./config/${sls:stage}.json):FrontendDomain}
 
 functions:
   login:
@@ -60,6 +61,9 @@ functions:
     events:
       - http:
           path: /
+          method: get
+      - http:
+          path: /assets/{any+}
           method: get
       - http:
           path: /static/{any+}
