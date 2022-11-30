@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import Artist from "./components/Artist.vue";
+import Card from "./components/Card.vue";
+import ChevronRightIcon from "./components/ChevronRightIcon.vue";
+import GenreSelector from "./components/GenreSelector.vue";
+import ReleaseRow from "./components/ReleaseRow.vue";
+import ReleaseSearchResults from "./components/ReleaseSearchResults.vue";
 
 const backendDomain = import.meta.env.VITE_BACKEND_DOMAIN;
 
@@ -418,7 +424,7 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
     </div>
     <div class="row" v-if="view === 'search'">
       <div class="col-6">
-        <card title="Artists" title-class="h5" :close="closeSearch">
+        <Card title="Artists" title-class="h5" :close="closeSearch">
           <span v-if="artistSearchResult.length === 0">No artists.</span>
           <ul
             class="list-group list-group-flush"
@@ -427,26 +433,28 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
             <li class="list-group-item" v-for="artist in artistSearchResult">
               <span class="float-end" @click="() => doArtistSearch((artist as any).id)">
                 <span class="link-primary">search</span>
-                <chevron-right />
+                <ChevronRightIcon />
               </span>
-              <artist
+              <Artist
                 :name="(artist as any).name"
                 :disambiguation="(artist as any).disambiguation"
               />
             </li>
           </ul>
-        </card>
+        </Card>
       </div>
       <div class="col-6">
-        <release-search-results
+        <ReleaseSearchResults
           :release-search-result="releaseSearchResult"
           :submit-rating="submitRating"
+          :close-search="closeSearch"
+          :user="user"
         />
       </div>
     </div>
     <div class="row" v-if="view === 'chart'">
       <div class="col-3">
-        <card title="Filter" title-class="h5">
+        <Card title="Filter" title-class="h5">
           <div class="container">
             <br />
             <ul class="nav nav-pills">
@@ -468,9 +476,9 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
               </li>
             </ul>
             <br />
-            <genre-selector
+            <GenreSelector
               :genres="genres"
-              :root-genres="rootGenres"
+              :root-genres="Array.from(rootGenres)"
               :set-current-genre="setCurrentGenre"
               :depth="0"
               :path="path"
@@ -482,7 +490,7 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
       </div>
 
       <div class="col-9">
-        <card
+        <Card
           :title="`Top ${currentGenre} releases of ${
             decade ? 'the ' + decade : 'all-time'
           }`"
@@ -502,7 +510,7 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
             </thead>
             <tbody>
               <template v-for="(release, i) in releases">
-                <release-row
+                <ReleaseRow
                   :release="release"
                   :number="i + 1"
                   :submit-rating="submitRating"
@@ -511,25 +519,8 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
               </template>
             </tbody>
           </table>
-        </card>
+        </Card>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.muted_tag {
-  color: gray;
-  text-decoration: none;
-}
-
-.genre_tag {
-  text-decoration: none;
-}
-
-ul.genre {
-  margin-left: 1em;
-  padding: 0;
-  list-style: none;
-}
-</style>
