@@ -6,6 +6,8 @@ import ChevronRightIcon from "./components/ChevronRightIcon.vue";
 import GenreSelector from "./components/GenreSelector.vue";
 import ReleaseRow from "./components/ReleaseRow.vue";
 import ReleaseSearchResults from "./components/ReleaseSearchResults.vue";
+import Tabs from "./components/Tabs.vue";
+import MyRatings from "./components/MyRatings.vue";
 
 const backendDomain = import.meta.env.VITE_BACKEND_DOMAIN;
 
@@ -412,7 +414,13 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
             </button>
           </div>
           &nbsp;
-          <a class="btn btn-primary" :href="backendDomain + '/login'" v-if="!user"> Login </a>
+          <a
+            class="btn btn-primary"
+            :href="backendDomain + '/login'"
+            v-if="!user"
+          >
+            Login
+          </a>
           <span v-if="user"> Hi, {{ user }} </span>
           &nbsp;
           <a class="btn btn-primary" v-if="user" href="/logout"> Logout </a>
@@ -422,105 +430,132 @@ $.getScript(`./static/data/genres.json`, (data: any) => {
     <div class="row">
       <div class="col">&nbsp;</div>
     </div>
-    <div class="row" v-if="view === 'search'">
-      <div class="col-6">
-        <Card title="Artists" title-class="h5" :close="closeSearch">
-          <span v-if="artistSearchResult.length === 0">No artists.</span>
-          <ul
-            class="list-group list-group-flush"
-            v-if="artistSearchResult.length > 0"
-          >
-            <li class="list-group-item" v-for="artist in artistSearchResult">
-              <span class="float-end" @click="() => doArtistSearch((artist as any).id)">
-                <span class="link-primary">search</span>
-                <ChevronRightIcon />
-              </span>
-              <Artist
-                :name="(artist as any).name"
-                :disambiguation="(artist as any).disambiguation"
-              />
-            </li>
-          </ul>
-        </Card>
-      </div>
-      <div class="col-6">
-        <ReleaseSearchResults
-          :release-search-result="releaseSearchResult"
-          :submit-rating="submitRating"
-          :close-search="closeSearch"
-          :user="user"
-        />
-      </div>
-    </div>
-    <div class="row" v-if="view === 'chart'">
-      <div class="col-3">
-        <Card title="Filter" title-class="h5">
+    <div class="row">
+      <Tabs
+        :items="{ charts: 'Charts', search: 'Search', myratings: 'My Ratings' }"
+        active="charts"
+      >
+        <template v-slot:charts>
           <div class="container">
-            <br />
-            <ul class="nav nav-pills">
-              <li class="nav-item">
-                <a
-                  :class="'nav-link ' + (decade === '' ? 'active' : '')"
-                  href="#"
-                  @click="() => setDecade('')"
-                  >All-time</a
-                >
-              </li>
-              <li class="nav-item" v-for="d in availableDecades">
-                <a
-                  :class="'nav-link ' + (decade === d ? 'active' : '')"
-                  href="#"
-                  @click="() => setDecade(d)"
-                  >{{ d }}</a
-                >
-              </li>
-            </ul>
-            <br />
-            <GenreSelector
-              :genres="genres"
-              :root-genres="Array.from(rootGenres)"
-              :set-current-genre="setCurrentGenre"
-              :depth="0"
-              :path="path"
-              :current-genre="currentGenre"
-              :set-path="setPath"
-            />
-          </div>
-        </card>
-      </div>
+            <div class="row">
+              <div class="col-3">
+                <Card title="Filter" title-class="h5">
+                  <div class="container">
+                    <br />
+                    <ul class="nav nav-pills">
+                      <li class="nav-item">
+                        <a
+                          :class="'nav-link ' + (decade === '' ? 'active' : '')"
+                          href="#"
+                          @click="() => setDecade('')"
+                          >All-time</a
+                        >
+                      </li>
+                      <li class="nav-item" v-for="d in availableDecades">
+                        <a
+                          :class="'nav-link ' + (decade === d ? 'active' : '')"
+                          href="#"
+                          @click="() => setDecade(d)"
+                          >{{ d }}</a
+                        >
+                      </li>
+                    </ul>
+                    <br />
+                    <GenreSelector
+                      :genres="genres"
+                      :root-genres="Array.from(rootGenres)"
+                      :set-current-genre="setCurrentGenre"
+                      :depth="0"
+                      :path="path"
+                      :current-genre="currentGenre"
+                      :set-path="setPath"
+                    />
+                  </div>
+                </Card>
+              </div>
 
-      <div class="col-9">
-        <Card
-          :title="`Top ${currentGenre} releases of ${
-            decade ? 'the ' + decade : 'all-time'
-          }`"
-          title-class="h5"
-        >
-          <h2 v-if="releases.length === 0">No releases.</h2>
-          <table class="table" v-if="releases.length > 0">
-            <thead>
-              <tr>
-                <th width="100">&nbsp;</th>
-                <th width="50">&nbsp;</th>
-                <th>&nbsp;</th>
-                <th>&nbsp;</th>
-                <th style="text-align: center">Average</th>
-                <th style="text-align: center">Ratings</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template v-for="(release, i) in releases">
-                <ReleaseRow
-                  :release="release"
-                  :number="i + 1"
+              <div class="col-9">
+                <Card
+                  :title="`Top ${currentGenre} releases of ${
+                    decade ? 'the ' + decade : 'all-time'
+                  }`"
+                  title-class="h5"
+                >
+                  <h2 v-if="releases.length === 0">No releases.</h2>
+                  <table class="table" v-if="releases.length > 0">
+                    <thead>
+                      <tr>
+                        <th width="100">&nbsp;</th>
+                        <th width="50">&nbsp;</th>
+                        <th>&nbsp;</th>
+                        <th>&nbsp;</th>
+                        <th style="text-align: center">Average</th>
+                        <th style="text-align: center">Ratings</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <template v-for="(release, i) in releases">
+                        <ReleaseRow
+                          :release="release"
+                          :number="i + 1"
+                          :submit-rating="submitRating"
+                          :is-logged-in="user !== ''"
+                        />
+                      </template>
+                    </tbody>
+                  </table>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </template>
+        <template v-slot:search>
+          <div class="container">
+            <div class="row">
+              <div class="col-6">
+                <Card title="Artists" title-class="h5" :close="closeSearch">
+                  <span v-if="artistSearchResult.length === 0"
+                    >No artists.</span
+                  >
+                  <ul
+                    class="list-group list-group-flush"
+                    v-if="artistSearchResult.length > 0"
+                  >
+                    <li
+                      class="list-group-item"
+                      v-for="artist in artistSearchResult"
+                    >
+                      <span
+                        class="float-end"
+                        @click="() => doArtistSearch((artist as any).id)"
+                      >
+                        <span class="link-primary">search</span>
+                        <ChevronRightIcon />
+                      </span>
+                      <Artist
+                        :name="(artist as any).name"
+                        :disambiguation="(artist as any).disambiguation"
+                      />
+                    </li>
+                  </ul>
+                </Card>
+              </div>
+              <div class="col-6">
+                <ReleaseSearchResults
+                  :release-search-result="releaseSearchResult"
                   :submit-rating="submitRating"
-                  :is-logged-in="user !== ''"
+                  :close-search="closeSearch"
+                  :user="user"
                 />
-              </template>
-            </tbody>
-          </table>
-        </Card>
-      </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-slot:myratings>
+          <MyRatings></MyRatings>
+        </template>
+      </Tabs>
     </div>
   </div>
 </template>

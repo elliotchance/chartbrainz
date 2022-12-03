@@ -3,5 +3,7 @@
     "OAuthClientSecret": "",
     "OAuthRedirectURI": "",
     "FrontendDomain": "",
-    "BackendDomain": ""
+    "BackendDomain": "",
+    "SupabaseKey": "",
+    "SupabaseURL": ""
 }

@@ -9,16 +9,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "jquery": "^3.6.1",
-    "vue": "^3.2.41",
+    "@supabase/supabase-js": "^2.1.1",
     "express": "^4.17.1",
+    "jquery": "^3.6.1",
     "request": "^2.88.2",
     "serverless-aws-static-file-handler": "^4.0.1",
     "serverless-offline": "^11.5.0",
-    "tough-cookie": "^4.1.2"
+    "tough-cookie": "^4.1.2",
+    "uuid": "^9.0.0",
+    "vue": "^3.2.41"
   },
   "devDependencies": {
     "@types/jquery": "^3.5.14",
+    "@types/uuid": "^9.0.0",
     "@vitejs/plugin-vue": "^3.2.0",
     "typescript": "^4.6.4",
     "vite": "^3.2.3",

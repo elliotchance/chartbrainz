@@ -1,7 +1,8 @@
-const AWS = require("aws-sdk");
-var request = require("request");
+import request from "request";
+import { createClient } from "@supabase/supabase-js";
+import { v4 as uuidv4 } from "uuid";
 
-module.exports.handler = (event, context, callback) => {
+export function handler(event, context, callback) {
   const code = event.queryStringParameters.code;
   const clientKey = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
@@ -40,13 +41,22 @@ module.exports.handler = (event, context, callback) => {
             Authorization: `Bearer ${resp.access_token}`,
           },
         },
-        function (error, response) {
+        async function (error, response) {
           if (error) {
             callback(error);
             return;
           }
 
           const userInfo = JSON.parse(response.body);
+
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_KEY;
+          const supabase = createClient(supabaseUrl, supabaseKey);
+
+          // Ignore the insert failure, so we make sure the ID doesn't change.
+          await supabase
+            .from("users")
+            .upsert({ user: userInfo.sub, id: uuidv4() });
 
           callback(null, {
             statusCode: 302,
@@ -63,4 +73,4 @@ module.exports.handler = (event, context, callback) => {
       );
     }
   );
-};
+}
