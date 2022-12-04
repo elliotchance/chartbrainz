@@ -13,13 +13,11 @@ custom:
     stage: ${sls:stage}
     createRoute53Record: true
 
-package:
-   include:
-      - handlers/**
-      - node_modules/**
-      - dist/**
-   exclude:
-      - "**"
+# package:
+#   patterns:
+#     # - handlers/**
+#     - ../frontend/dist/**
+#     # - node_modules/**
 
 provider:
   name: aws
@@ -28,11 +26,11 @@ provider:
   environment:
     # If you get an error here when running locally, make sure you run:
     #   make config/local.json
-    OAUTH_CLIENT_ID: ${file(./config/${sls:stage}.json):OAuthClientID}
-    OAUTH_CLIENT_SECRET: ${file(./config/${sls:stage}.json):OAuthClientSecret}
-    OAUTH_REDIRECT_URI: ${file(./config/${sls:stage}.json):OAuthRedirectURI}
-    BACKEND_DOMAIN: ${file(./config/${sls:stage}.json):BackendDomain}
-    FRONTEND_DOMAIN: ${file(./config/${sls:stage}.json):FrontendDomain}
+    OAUTH_CLIENT_ID: ${file(../config/${sls:stage}.json):OAuthClientID}
+    OAUTH_CLIENT_SECRET: ${file(../config/${sls:stage}.json):OAuthClientSecret}
+    OAUTH_REDIRECT_URI: ${file(../config/${sls:stage}.json):OAuthRedirectURI}
+    BACKEND_DOMAIN: ${file(../config/${sls:stage}.json):BackendDomain}
+    FRONTEND_DOMAIN: ${file(../config/${sls:stage}.json):FrontendDomain}
 
 functions:
   login:
@@ -66,7 +64,7 @@ functions:
           path: /assets/{any+}
           method: get
       - http:
-          path: /static/{any+}
+          path: /data/{any+}
           method: get
 
   fetch-ratings:

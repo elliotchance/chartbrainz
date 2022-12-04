@@ -1,38 +1,30 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import GenreList from "./GenreList.vue";
 import Tag from "./Tag.vue";
+import { GenreParentChildType } from "../types";
 
-const {
-  genres,
-  rootGenres,
-  setCurrentGenre,
-  path,
-  currentGenre,
-  setPath,
-} = defineProps<{
-  genres: Genre[];
-  rootGenres: string[];
-  setCurrentGenre: (path: string, depth: number) => void;
-  path: string[];
-  currentGenre: string;
-  setPath: (path: string[]) => void;
-}>();
+const { genres, rootGenres, setCurrentGenre, path, currentGenre, setPath } =
+  defineProps<{
+    genres: GenreParentChildType[];
+    rootGenres: string[];
+    setCurrentGenre: (path: string, depth: number) => void;
+    path: string[];
+    currentGenre: string;
+    setPath: (path: string[]) => void;
+  }>();
 
 const filter = ref("");
 
-type Genre = {
-  parent_genre: string;
-  child_genre: string;
-};
-
-function pathForGenre(genres: Genre[], genre: string) {
+function pathForGenre(genres: GenreParentChildType[], genre: string) {
   let path = [genre];
   let currentGenre = genre;
 
   // 20 is just a safety measure in case theres a circular reference.
   for (let i = 0; i < 20; i++) {
-    const parents = genres.filter((g: Genre) => g.child_genre === currentGenre);
+    const parents = genres.filter(
+      (g: GenreParentChildType) => g.child_genre === currentGenre
+    );
 
     if (parents.length === 0) {
       break;
@@ -44,15 +36,6 @@ function pathForGenre(genres: Genre[], genre: string) {
   }
 
   return path;
-}
-
-function filteredGenres(): Array<string> {
-  const all = new Set<string>([
-    ...genres.map((genre: any) => genre.parent_genre),
-    ...genres.map((genre: any) => genre.child_genre),
-  ]);
-
-  return [...all].filter((genre) => genre.indexOf(filter.value) >= 0).sort();
 }
 
 function selectGenre(genre: string) {
@@ -73,11 +56,16 @@ function selectGenre(genre: string) {
     </div>
     <div v-if="filter !== ''">
       <ul class="genre">
-        <li v-for="genre in filteredGenres()">
+        <li
+          v-for="genre in [...new Set<string>([
+    ...genres.map((genre: GenreParentChildType) => genre.parent_genre),
+    ...genres.map((genre: GenreParentChildType) => genre.child_genre),
+  ])].filter((genre: string) => genre.indexOf(filter) >= 0).sort()"
+        >
           <small>
             <Tag :name="genre" @click="() => selectGenre(genre)">{{
               genre
-            }}</tag>
+            }}</Tag>
           </small>
         </li>
       </ul>

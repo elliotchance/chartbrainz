@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import GenreList from "./GenreList.vue";
 import Tag from "./Tag.vue";
-
-type Genre = {
-  parent_genre: string;
-  child_genre: string;
-};
+import { GenreParentChildType } from "../types";
 
 const { genres, rootGenres, setCurrentGenre, path, depth } = defineProps<{
-  genres: Genre[];
+  genres: GenreParentChildType[];
   rootGenres: string[];
   setCurrentGenre: (genre: string, depth: number) => void;
   path: string[];
@@ -23,13 +19,13 @@ const { genres, rootGenres, setCurrentGenre, path, depth } = defineProps<{
         <strong v-if="genre === path[depth]">
           <Tag :name="genre" @click="() => setCurrentGenre(genre, depth)">
             {{ genre }}
-          </tag>
+          </Tag>
         </strong>
         <Tag
           :name="genre"
           @click="() => setCurrentGenre(genre, depth)"
           v-if="depth === path.length"
-          >{{ genre }}</tag
+          >{{ genre }}</Tag
         >
       </small>
 
@@ -37,8 +33,8 @@ const { genres, rootGenres, setCurrentGenre, path, depth } = defineProps<{
         :genres="genres"
         :root-genres="
           genres
-            .filter((g: Genre) => g.parent_genre === genre)
-            .map((g: Genre) => g.child_genre)
+            .filter((g: GenreParentChildType) => g.parent_genre === genre)
+            .map((g: GenreParentChildType) => g.child_genre)
         "
         :set-current-genre="setCurrentGenre"
         v-if="genre === path[depth]"

@@ -1,5 +1,4 @@
-const AWS = require("aws-sdk");
-var request = require("request");
+const request = require("request");
 
 module.exports.handler = (event, context, callback) => {
   const code = event.queryStringParameters.code;

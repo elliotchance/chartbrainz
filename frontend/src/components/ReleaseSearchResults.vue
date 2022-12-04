@@ -3,22 +3,17 @@ import { ref } from "vue";
 import Card from "./Card.vue";
 import Date from "./Date.vue";
 import RatingSelector from "./RatingSelector.vue";
+import ReleaseGroupCoverArt from "./ReleaseGroupCoverArt.vue";
+import { ReleaseType } from "../types";
+import { submitRating, ratingFor } from "../lib";
 
-const { releaseSearchResult, submitRating, closeSearch, user } = defineProps<{
-  releaseSearchResult: any;
-  submitRating: (releaseGroup: any, rating: number) => Promise<void>;
+const { releaseSearchResult, closeSearch, user } = defineProps<{
+  releaseSearchResult: ReleaseType[];
   closeSearch: () => void;
-  user: string;
+  user?: string;
 }>();
 
 const refreshKey = ref(Math.floor(Math.random() * 1e6));
-
-function ratingFor(releaseGroup: string) {
-  return parseInt(
-    window.localStorage[`release_group:${releaseGroup}:rating`] || "0",
-    10
-  );
-}
 </script>
 
 <template>
@@ -28,14 +23,9 @@ function ratingFor(releaseGroup: string) {
       <tbody>
         <tr v-for="release in releaseSearchResult">
           <td style="width: 110px">
-            <img
-              :src="
-                'https://coverartarchive.org/release-group/' +
-                release.id +
-                '/front-250'
-              "
-              :alt="release.release_group"
-              width="100"
+            <ReleaseGroupCoverArt
+              :release-id="release.id"
+              :release-title="release.title"
             />
           </td>
           <td>
@@ -44,10 +34,10 @@ function ratingFor(releaseGroup: string) {
             }}</a>
             ({{ release.type }})<br />{{ release.artist }}<br />
             <Date
-              :year="release.releaseDate?.split('-')[0]"
-              :month="release.releaseDate?.split('-')[1]"
-              :day="release.releaseDate?.split('-')[2]"
-              v-if="release.releaseDate"
+              :year="release.releaseYear"
+              :month="release.releaseMonth"
+              :day="release.releaseDay"
+              v-if="release.releaseYear"
             /><br />{{ (release.tags || []).join(",") }}
           </td>
           <td style="text-align: right">
@@ -55,11 +45,10 @@ function ratingFor(releaseGroup: string) {
               :release-group="release.id"
               :rating="ratingFor(release.id)"
               :submit-rating="
-                (releaseGroup: any, rating: number) => {
-                  submitRating(releaseGroup, rating).then(
-                    () => (refreshKey = Math.floor(Math.random() * 1e6))
-                  );
-                }
+                (releaseGroup: string, rating: number): Promise<void> =>
+                  submitRating(releaseGroup, rating).then(() => {
+                      refreshKey = Math.floor(Math.random() * 1e6);
+                  })
               "
               v-if="user !== ''"
               :refresh-key="refreshKey"

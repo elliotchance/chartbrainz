@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const { day, month, year } = defineProps<{
-  day: string;
-  month: string;
-  year: string;
+  day?: number;
+  month?: number;
+  year?: number;
 }>();
 
 const monthName = [

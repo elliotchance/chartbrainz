@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import Stars from './Stars.vue';
+import Stars from "./Stars.vue";
+import { SubmitRatingFn } from "../types";
 
 const { rating, releaseGroup, submitRating } = defineProps<{
   rating: number;
-  releaseGroup: any;
-  submitRating: (releaseGroup: any, rating: number) => void;
+  releaseGroup: string;
+  submitRating: SubmitRatingFn;
 }>();
 </script>
 
@@ -18,7 +19,7 @@ const { rating, releaseGroup, submitRating } = defineProps<{
       data-bs-toggle="dropdown"
       aria-expanded="false"
     >
-      <Stars :rating="rating" />
+      <Stars :rating="rating" :key="Math.random()" />
     </button>
     <ul class="dropdown-menu">
       <li v-for="rating in [0, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10]">

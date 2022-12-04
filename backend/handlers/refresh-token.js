@@ -5,7 +5,7 @@ module.exports.handler = (event, context, callback) => {
   for (const cookie of event.multiValueHeaders.cookie || []) {
     refreshToken = cookie.match(/refresh=(.*?);/)[1];
     if (refreshToken) {
-        break;
+      break;
     }
   }
 
