@@ -4,7 +4,7 @@
 //
 // See handlers/oauth.js for return step.
 
-module.exports.handler = async (event, context) => {
+module.exports.handler = async () => {
   // We need fetch "profile" to get the MusicBrainz user name. We don't care
   // about the other profile information. All the others allow for reading and
   // writing of those entities. We don't need write access for some of these but
@@ -16,15 +16,18 @@ module.exports.handler = async (event, context) => {
   const redirectURI = process.env.OAUTH_REDIRECT_URI;
 
   const authorizeURL =
-  "https://musicbrainz.org/oauth2/authorize?response_type=code&scope=" +
-  encodeURIComponent(scopes.join(' ')) +
-  "&client_id=" + encodeURIComponent(clientID) + "&redirect_uri=" +
-  encodeURIComponent(redirectURI) + '&access_type=offline';
+    "https://musicbrainz.org/oauth2/authorize?response_type=code&scope=" +
+    encodeURIComponent(scopes.join(" ")) +
+    "&client_id=" +
+    encodeURIComponent(clientID) +
+    "&redirect_uri=" +
+    encodeURIComponent(redirectURI) +
+    "&access_type=offline";
 
   return {
     statusCode: 302,
     headers: {
-        "Location": authorizeURL,
+      Location: authorizeURL,
     },
   };
 };

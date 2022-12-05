@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { name, disambiguation } = defineProps<{
   name: string;
-  disambiguation: string;
+  disambiguation?: string;
 }>();
 </script>
 

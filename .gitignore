@@ -1,5 +1,4 @@
 .serverless/
-public/static/data/
 dump/
 db.sqlite3
 config/prod.json

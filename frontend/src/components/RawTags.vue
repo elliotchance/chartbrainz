@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Tag from './Tag.vue';
+import Tag from "./Tag.vue";
 
 const { tags, cls } = defineProps<{
   tags: string;

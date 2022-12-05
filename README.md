@@ -54,7 +54,7 @@ make db.sqlite3
 ## Regenerate Data Files
 
 ```sh
-rm -rf static/data
+rm -rf backend/static/data
 make all-data
 ```
 

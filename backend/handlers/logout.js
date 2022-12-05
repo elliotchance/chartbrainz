@@ -1,4 +1,4 @@
-var request = require("request");
+const request = require("request");
 
 module.exports.handler = (event, context, callback) => {
   let accessToken = "";
@@ -29,15 +29,24 @@ module.exports.handler = (event, context, callback) => {
       // We should never return an error, even if something goes wrong wipe out
       // the cookies.
       callback(null, {
-        statusCode: 302,
+        statusCode: 200,
         multiValueHeaders: {
-          Location: [domain],
           "Set-Cookie": [
-            `bearer=; path=/; expires=Thu, 21 Sep 1979 00:00:01 UTC;`,
-            `refresh=; path=/; expires=Thu, 21 Sep 1979 00:00:01 UTC;`,
-            `user=; path=/; expires=Thu, 21 Sep 1979 00:00:01 UTC;`,
+            // Note: If you modify these you will also need to update logout()
+            // to handle an edge case for running locally.
+            "bearer=; path=/; expires=Thu, 21 Sep 1979 00:00:01 UTC;",
+            "refresh=; path=/; expires=Thu, 21 Sep 1979 00:00:01 UTC;",
+            "user=; path=/; expires=Thu, 21 Sep 1979 00:00:01 UTC;",
           ],
+          "Content-Type": ["text/html; charset=utf-8"],
         },
+        body: `
+          <!DOCTYPE html>
+          <html>
+          <head><meta http-equiv="refresh" content="0; url='${domain}'"></head>
+          <body></body>
+          </html>
+        `,
       });
     }
   );
